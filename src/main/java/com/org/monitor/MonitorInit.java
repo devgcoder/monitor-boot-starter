@@ -5,13 +5,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.org.monitor.elasticsearch.CustomConnectionKeepAliveStrategy;
 import com.org.monitor.model.*;
-import com.org.monitor.model.CommonParams.MonitorMailType;
 import com.org.monitor.model.CommonParams.MonitorModelType;
 import com.org.monitor.utils.CommonEnum;
 import com.org.monitor.utils.CommonEnum.WarnType;
 import com.org.monitor.utils.CommonEnum.messageType;
 import com.org.monitor.utils.DingdingUtil;
-import com.org.monitor.utils.MailUtil;
 import com.org.monitor.utils.MonitorMomeryUtil;
 import com.org.monitor.utils.MonitorUtil;
 import com.rabbitmq.client.AMQP;
@@ -23,7 +21,6 @@ import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.http.HttpHost;
@@ -83,9 +80,6 @@ public class MonitorInit implements InitializingBean {
     // 初始化消息
     RabbitMonitor rabbitMonitorMessage = rabbitConfig.getRabbitMonitorMessage();
     initRabbitMqChannel(rabbitConfig, rabbitMonitorMessage);
-    // 初始化内存
-    RabbitMonitor rabbitMonitorMemory = rabbitConfig.getRabbitMonitorMemory();
-    initRabbitMqChannel(rabbitConfig, rabbitMonitorMemory);
   }
 
 
@@ -155,8 +149,7 @@ public class MonitorInit implements InitializingBean {
             DingdingConfig dingdingConfig = monitorConfig.getDingdingConfig();
             String keyword = dingdingConfig == null ? null : dingdingConfig.getKeyword();
             // next check send mail
-            MailConfig mailConfig = monitorConfig.getMailConfig();
-            if (null != mailConfig) {
+            if (null != monitorConfig) {
               String evnName = monitorConfig.getEvnName();
               String classMethod = messageMap.getString("classMethod");
               String resultType = messageMap.getString("resultType");
@@ -171,77 +164,25 @@ public class MonitorInit implements InitializingBean {
                 }
               }
               if (null != resultType && resultType.equals(CommonEnum.resultType.ERROR.getKey())) {
-                Boolean mailMessageError = mailConfig.getMailMessageError();
+                Boolean mailMessageError = monitorConfig.getMessageError();
                 if (null != mailMessageError && mailMessageError) {
                   String mailContent = (MonitorUtil.isNullOrEmpty(keyword) ? WarnType.BUSSINESS.getName() : keyword) + "类名方法:" + classMethod + "请求错误,"
                       + "消息KEY:" + messageKey + ",请求时间:" + startTime + messageParams + ",环境:" + evnName;
-                  MailUtil.sendMail(mailConfig, MonitorMailType.SEND_ERROR.getKey(), MonitorMailType.SEND_ERROR.getName(), mailContent);
                   DingdingUtil.sendMsg(MonitorUtil.TEXT, mailContent, null);
                 }
               } else {
                 Long costTime = messageMap.getLong("costTime");
-                Long maxCostTime = mailConfig.getMaxCostTime();
+                Long maxCostTime = monitorConfig.getMessageMaxCostTime();
                 if (null != maxCostTime && null != costTime && costTime > maxCostTime) {
-                  Boolean mailMessageOvertime = mailConfig.getMailMessageOvertime();
+                  Boolean mailMessageOvertime = monitorConfig.getMessageOvertime();
                   if (null != mailMessageOvertime && mailMessageOvertime) {
                     String mailContent = (MonitorUtil.isNullOrEmpty(keyword) ? WarnType.BUSSINESS.getName() : keyword) + "类名方法:" + classMethod + "请求超时,"
                         + "消息KEY:" + messageKey + ",花费时长:" + costTime + ",请求时间:" + startTime + messageParams + ",环境:" + evnName;
-                    MailUtil.sendMail(mailConfig, MonitorMailType.SEND_OVERTIME.getKey(), MonitorMailType.SEND_OVERTIME.getName(), mailContent);
                     DingdingUtil.sendMsg(MonitorUtil.TEXT, mailContent, null);
                   }
                 }
               }
             }
-          } else if (null != messageModelType && messageModelType.equals(MonitorModelType.MEMORY.getKey())) {
-            indexName = MonitorUtil.getMemoryIndexName();
-            MailConfig mailConfig = monitorConfig.getMailConfig();
-            if (null != mailConfig) {
-              String evnName = monitorConfig.getEvnName();
-              Double vmUse = messageMap.getDouble("vmUse");
-              Double vmTotal = messageMap.getDouble("vmTotal");
-              Boolean mailJvm = mailConfig.getMailJvm();
-              Double mailJvmRate = mailConfig.getMailJvmRate();
-              if (mailJvmRate == null || mailJvmRate <= 0d) {
-                mailJvmRate = limitRate;
-              }
-              double jvmUseRate = (double) Math.round((vmUse / vmTotal) * 100) / 100;
-              if (null != mailJvm && mailJvm && jvmUseRate > mailJvmRate) {
-                String mailContent =
-                    WarnType.SERVER.getName() + "数据详情:" + message + ",环境:" + evnName + ",内存阀值:" + mailJvmRate + ",JVM内存使用占比:" + jvmUseRate;
-                MailUtil.sendMail(mailConfig, MonitorMailType.JVM_OVERLIMIT.getKey(), MonitorMailType.JVM_OVERLIMIT.getName(), mailContent);
-                DingdingUtil.sendMsg(MonitorUtil.TEXT, mailContent, null);
-              }
-              Boolean mailPhysical = mailConfig.getMailPhysical();
-              Double mailPhysicalRate = mailConfig.getMailPhysicalRate();
-              if (mailPhysicalRate == null || mailPhysicalRate <= 0d) {
-                mailPhysicalRate = limitRate;
-              }
-              Double physicalUse = messageMap.getDouble("physicalUse");
-              Double physicalTotal = messageMap.getDouble("physicalTotal");
-              double physicalUseRate = (double) Math.round((physicalUse / physicalTotal) * 100) / 100;
-              if (null != mailPhysical && mailPhysical && physicalUseRate > mailPhysicalRate) {
-                String mailContent =
-                    WarnType.SERVER.getName() + "数据详情:" + message + ",环境:" + evnName + ",内存阀值:" + mailPhysicalRate + ",物理内存使用占比:" + physicalUseRate;
-                MailUtil.sendMail(mailConfig, MonitorMailType.PHYSICAL_OVERTIME.getKey(), MonitorMailType.PHYSICAL_OVERTIME.getName(), mailContent);
-                DingdingUtil.sendMsg(MonitorUtil.TEXT, mailContent, null);
-              }
-            }
-          } else if (null != messageModelType && messageModelType.equals(MonitorModelType.APP.getKey())) {
-            indexName = MonitorUtil.getAppIndexName(); // 获取索引名称
-            MailConfig mailConfig = monitorConfig.getMailConfig();
-            if (null == mailConfig) {
-              logger.warn("app warn mailConfig can not be null");
-            }
-            String evnName = monitorConfig.getEvnName();
-            String appType = messageMap.getString("appType");
-            String username = messageMap.getString("username");
-            String appVersion = messageMap.getString("appVersion");
-            String phoneModel = messageMap.getString("phoneModel");
-            String warnTime = messageMap.getString("warnTime");
-            String warnReason = messageMap.getString("warnReason");
-            String mailContent = WarnType.APP.getName() + "APP类型:" + appType + ",用户名:" + username + ",APP版本:" + appVersion +
-                ",手机型号:" + phoneModel + ",报警原因:" + warnReason + ",预警时间:" + warnTime + ",环境:" + evnName;
-            DingdingUtil.sendMsg(MonitorUtil.TEXT, mailContent, null);
           }
           if (null != indexName && !indexName.equals("")) {
             MonitorUtil.checkAndCreateIndex(indexName, restHighLevelClient);

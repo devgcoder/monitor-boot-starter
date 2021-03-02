@@ -24,13 +24,17 @@ public class MonitorConfig {
 
   private String localPort;
 
-  private Boolean vmMemory;
+  private Long messageMaxCostTime;
+
+  private Long messageLimitTime;
+
+  private Boolean messageError;
+
+  private Boolean messageOvertime;
 
   private RabbitConfig rabbitConfig;
 
   private ElasticSearchConfig elasticSearchConfig;
-
-  private MailConfig mailConfig;
 
   private DingdingConfig dingdingConfig;
 
@@ -108,14 +112,6 @@ public class MonitorConfig {
     this.localPort = localPort;
   }
 
-  public Boolean getVmMemory() {
-    return vmMemory;
-  }
-
-  public void setVmMemory(Boolean vmMemory) {
-    this.vmMemory = vmMemory;
-  }
-
   public RabbitConfig getRabbitConfig() {
     return rabbitConfig;
   }
@@ -132,14 +128,6 @@ public class MonitorConfig {
     this.elasticSearchConfig = elasticSearchConfig;
   }
 
-  public MailConfig getMailConfig() {
-    return mailConfig;
-  }
-
-  public void setMailConfig(MailConfig mailConfig) {
-    this.mailConfig = mailConfig;
-  }
-
   public DingdingConfig getDingdingConfig() {
     return dingdingConfig;
   }
@@ -154,5 +142,37 @@ public class MonitorConfig {
 
   public void setServerAccessConfig(List<String> serverAccessConfig) {
     this.serverAccessConfig = serverAccessConfig;
+  }
+
+  public Long getMessageMaxCostTime() {
+    return messageMaxCostTime;
+  }
+
+  public void setMessageMaxCostTime(Long messageMaxCostTime) {
+    this.messageMaxCostTime = messageMaxCostTime;
+  }
+
+  public Long getMessageLimitTime() {
+    return messageLimitTime;
+  }
+
+  public void setMessageLimitTime(Long messageLimitTime) {
+    this.messageLimitTime = messageLimitTime;
+  }
+
+  public Boolean getMessageError() {
+    return messageError;
+  }
+
+  public void setMessageError(Boolean messageError) {
+    this.messageError = messageError;
+  }
+
+  public Boolean getMessageOvertime() {
+    return messageOvertime;
+  }
+
+  public void setMessageOvertime(Boolean messageOvertime) {
+    this.messageOvertime = messageOvertime;
   }
 }

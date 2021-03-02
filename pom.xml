@@ -9,9 +9,9 @@
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
   <groupId>com.org.monitor</groupId>
-  <artifactId>monitor-core</artifactId>
-  <version>2.1.6</version>
-  <name>monitor-core</name>
+  <artifactId>monitor-boot-starter</artifactId>
+  <version>1.1.1</version>
+  <name>monitor-boot-starter</name>
   <description>Demo project for Spring Boot</description>
 
   <properties>
