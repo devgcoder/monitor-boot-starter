@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>监控平台首页</title>
+  <link href="devg-monitor/layui.css" rel="stylesheet"/>
+  <script src='devg-monitor/jquery-1.10.2.min.js' type='text/javascript'></script>
+  <script src='devg-monitor/echarts.min.js' type='text/javascript'></script>
+  <script src="devg-monitor/layui.all.js" type='text/javascript'></script>
+  <script type="text/javascript">
+    var url = '';
+    $(document).ready(function () {
+      var location = window.location.href;
+      console.log("location:" + location);
+      url = location.replace('monitor-ui.html', '');
+      // url = 'http://192.168.0.13:8585/';
+      console.log("url:" + url);
+      initDate();
+      searchByDate();
+      layui.use(['form'], function () {
+        var form = layui.form;
+        form.on('select(viewCountMessageType)', function (data) {
+          initViewCount();
+        });
+      });
+      //选中后的回调
+      layui.laydate.render({
+        elem: '#theDate'
+        , max: 0
+        , done: function (value, date) {
+          searchByDate()
+        }
+      });
+    });
+
+    function initDate() {
+      $.ajax({
+        type: "get",
+        async: false,
+        url: url + 'devg/monitor/initDate',
+        dataType: "json",
+        success: function (result) {
+          if (!result.success) {
+            console.log("message:" + result.message);
+            self.location.href = url + 'monitor-login.html';
+            return false;
+          }
+          var theDate = result.data.theDate;
+          $("#theDate").val(theDate);
+          var selectHour = result.data.selectHour;
+          $("#selectHour").val(selectHour);
+          var monitorName = result.data.monitorName;
+          $("#monitorName").text(monitorName);
+        },
+        error: function (errorMsg) {
+          //请求失败时执行该函数
+          alert("请求数据失败!");
+        }
+      });
+    }
+
+    function initPageViewMemoryData() {
+      var theDate = $("#theDate").val();
+      var selectHour = $("#selectHour").val();
+      var myChart = echarts.init(document.getElementById('pageMemoryView'));
+      myChart.showLoading();    //数据加载完之前先显示一段简单的loading动画
+      var names = [];    //（实际用来盛放X轴坐标值）
+      var vmUseList = [];    // JVM已用内存
+      var vmMaxList = [];    // JVM最大内存
+      var vmFreeList = [];  //JVM空闲内存
+      var vmTotalList = [];  //JVM总内存
+      var vmUseRateList = [];  //JVM使用内存
+      var physicalUseList = []; //操作系统已用内存
+      var physicalFreeList = []; //操作系统空闲内存
+      var physicalTotalList = []; //操作系统总内存
+      var physicalUseRateList = []; //操作系统总内存
+      var totalThreadList = []; //线程总数
+
+      $.ajax({
+        type: "get",
+        async: false,
+        url: url + 'devg/monitor/pageMemoryView',
+        data: {'theDate': theDate, 'selectHour': selectHour},
+        dataType: "json",
+        success: function (result) {
+          if (!result.success) {
+            console.log("message:" + result.message);
+            myChart.hideLoading();    //隐藏加载动画
+            self.location.href = url + 'monitor-login.html';
+            return false;
+          }
+          if (result.success) {
+            var keyList = result.data.keyList;
+            for (var i = 0; i < keyList.length; i++) {
+              names.push(keyList[i]);
+            }
+            var vmUseValueList = result.data.vmUseValueList;
+            for (var i = 0; i < vmUseValueList.length; i++) {
+              vmUseList.push(vmUseValueList[i]);
+            }
+            var vmMaxValueList = result.data.vmMaxValueList;
+            for (var i = 0; i < vmMaxValueList.length; i++) {
+              vmMaxList.push(vmMaxValueList[i]);
+            }
+            var vmFreeValueList = result.data.vmFreeValueList;
+            for (var i = 0; i < vmFreeValueList.length; i++) {
+              vmFreeList.push(vmFreeValueList[i]);
+            }
+            var vmTotalValueList = result.data.vmTotalValueList;
+            for (var i = 0; i < vmTotalValueList.length; i++) {
+              vmTotalList.push(vmTotalValueList[i]);
+            }
+            var vmUseRateValueList = result.data.vmUseRateValueList;
+            for (var i = 0; i < vmUseRateValueList.length; i++) {
+              vmUseRateList.push(vmUseRateValueList[i]);
+            }
+
+            var physicalUseValueList = result.data.physicalUseValueList;
+            for (var i = 0; i < physicalUseValueList.length; i++) {
+              physicalUseList.push(physicalUseValueList[i]);
+            }
+            var physicalFreeValueList = result.data.physicalFreeValueList;
+            for (var i = 0; i < physicalFreeValueList.length; i++) {
+              physicalFreeList.push(physicalFreeValueList[i]);
+            }
+            var physicalTotalValueList = result.data.physicalTotalValueList;
+            for (var i = 0; i < physicalTotalValueList.length; i++) {
+              physicalTotalList.push(physicalTotalValueList[i]);
+            }
+            var physicalUseRateValueList = result.data.physicalUseRateValueList;
+            for (var i = 0; i < physicalUseRateValueList.length; i++) {
+              physicalUseRateList.push(physicalUseRateValueList[i]);
+            }
+            var totalThreadValueList = result.data.totalThreadValueList;
+            for (var i = 0; i < totalThreadValueList.length; i++) {
+              totalThreadList.push(totalThreadValueList[i]);
+            }
+            var startScollBar = result.data.startScollBar;
+            var endScollBar = result.data.endScollBar;
+            myChart.hideLoading();    //隐藏加载动画
+            myChart.setOption({        //加载数据图表
+              // title: {
+              //    text: '内存统计'
+              //  },
+              tooltip: {
+                trigger: 'axis',
+                padding: 10,
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                textStyle: {
+                  color: '#ffffff',
+                },
+                extraCssText: 'text-align: left;'
+              },
+              legend: {
+                data: ['JVM已用内存', 'JVM最大内存', 'JVM空闲内存', 'JVM总内存', 'JVM使用占比', '操作系统已用内存', '操作系统空闲内存', '操作系统总内存', '操作系统使用占比', '线程总数']
+              },
+              dataZoom: [{
+                // type: 'slider',
+                // show: true,
+                // xAxisIndex: [0],
+                // zoomLock: true,
+                // start: startScollBar,//滚动条的起始位置
+                // end: endScollBar, //滚动条的截止位置（按比例分割你的柱状图x轴长度）
+                // handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                // handleSize: '80%',
+                // handleStyle: {
+                //     color: '#fff',
+                //     shadowBlur: 3,
+                //     shadowColor: 'rgba(0, 0, 0, 0.6)',
+                //     shadowOffsetX: 2,
+                //     shadowOffsetY: 2
+                // }
+                type: 'slider',
+                show: true, // flase直接隐藏图形
+                showDetail: false,
+                xAxisIndex: [0],
+                height: 3,
+                showDataShadow: false,
+                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                fillerColor: '#FEA629',
+                borderColor: 'transparent',
+                backgroundColor: 'transparent',
+                handleSize: 18,
+                bottom: 40,
+                zoomLock: true,
+                dataBackgroundColor: 'transparent',
+                start: startScollBar,//滚动条的起始位置
+                end: endScollBar, //滚动条的截止位置（按比例分割你的柱状图x轴长度）
+                handleStyle: {
+                  color: '#FEA629',
+                  shadowBlur: 3,
+                  shadowColor: 'rgba(0, 0, 0, 0.6)',
+                  shadowOffsetX: 2,
+                  shadowOffsetY: 2
+                },
+                dataBackground: {
+                  lineStyle: {
+                    color: 'transparent'
+                  },
+                  areaStyle: {
+                    color: 'transparent'
+                  }
+                }
+              }],
+              grid: {
+                left: '2%',
+                right: '4.5%',
+                bottom: '5.5%',
+                containLabel: true
+              },
+              xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: names,
+                axisLabel: { //设置x轴的字
+                  show: true,
+                  interval: 0,//使x轴横坐标全部显示
+                  textStyle: {//x轴字体样式
+                    color: "rgba(255,255,255,1)",
+                    margin: 5
+                  }
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                },
+                axisTick: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                }
+              },
+              yAxis: {
+                type: 'value',
+                axisLabel: { //设置x轴的字
+                  show: true,
+                  interval: 0,//使x轴横坐标全部显示
+                  textStyle: {//x轴字体样式
+                    color: "rgba(255,255,255,1)",
+                    margin: 5
+                  }
+                },
+                axisTick: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                },
+                splitLine: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                }
+                /*  , min: 0
+                  , max: 20000*/
+              },
+              color: ['#FDFF55', '#FFA043', '#FF7357', '#0EC687', '#66F2CC', '#5592FF', '#60D0FF', '#AD55FF', '#FF55E5', '#FF3333'],
+              legend: {
+                right: 50,
+                // width: '50%',
+                itemWidth: 14,
+                itemHeight: 14,
+                textStyle: {
+                  fontSize: 14,
+                  color: '#fff'
+                },
+                icon: 'rect'
+              },
+              series: [
+                {
+                  name: 'JVM已用内存',
+                  type: 'line',
+                  stack: '总量1',
+                  itemStyle: {
+                    color: 'blue',
+                    normal: {
+                      label: {show: true}
+                    }
+                  },
+                  data: vmUseList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + 'MB';
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  name: 'JVM最大内存',
+                  type: 'line',
+                  stack: '总量2',
+                  itemStyle: {normal: {label: {show: true}}},
+                  data: vmMaxList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + 'MB';
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  name: 'JVM空闲内存',
+                  type: 'line',
+                  stack: '总量3',
+                  itemStyle: {normal: {label: {show: true}}},
+                  data: vmFreeList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + 'MB';
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  name: 'JVM总内存',
+                  type: 'line',
+                  stack: '总量4',
+                  itemStyle: {normal: {label: {show: true}}},
+                  data: vmTotalList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + 'MB';
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  name: 'JVM使用占比',
+                  type: 'line',
+                  stack: '总量5',
+                  itemStyle: {normal: {label: {show: true}}},
+                  data: vmUseRateList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + "%";
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  name: '操作系统已用内存',
+                  type: 'line',
+                  stack: '总量6',
+                  itemStyle: {normal: {label: {show: true}}},
+                  data: physicalUseList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + 'MB';
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  name: '操作系统空闲内存',
+                  type: 'line',
+                  stack: '总量7',
+                  itemStyle: {normal: {label: {show: true}}},
+                  data: physicalFreeList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + 'MB';
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  name: '操作系统总内存',
+                  type: 'line',
+                  stack: '总量8',
+                  itemStyle: {normal: {label: {show: true}}},
+                  data: physicalTotalList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + 'MB';
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  name: '操作系统使用占比',
+                  type: 'line',
+                  stack: '总量9',
+                  itemStyle: {normal: {label: {show: true}}},
+                  data: physicalUseRateList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + '%';
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  name: '线程总数',
+                  type: 'line',
+                  stack: '总量10',
+                  itemStyle: {normal: {label: {show: true}}},
+                  data: totalThreadList,
+                  label: {
+                    normal: {
+                      show: false,
+                      position: 'top',
+                      formatter: function (params) {
+                        if (params.value > 0) {
+                          return params.value + 'MB';
+                        }
+                      }
+                    }
+                  }
+                }],
+              formatter: function (params) {
+                var relVal = params;
+                if (params[0].name != '' && params[0].name != undefined) {
+                  relVal = params[0].name;
+                }
+                for (var i = 0, l = params.length; i < l; i++) {
+                  if (params[i].seriesName !== "" && params[i].seriesName != undefined) {
+                    if (params[i].seriesName === "JVM使用占比" || params[i].seriesName === "操作系统使用占比") {
+                      relVal += '<br/>' + params[i].marker + params[i].seriesName + ' : ' + params[i].value + "%";
+                    } else if (params[i].seriesName === "JVM已用内存" || params[i].seriesName === "JVM最大内存" || params[i].seriesName === "JVM空闲内存"
+                        || params[i].seriesName === "JVM总内存") {
+                      relVal += '<br/>' + params[i].marker + params[i].seriesName + ' : ' + params[i].value + "MB";
+                    } else if (params[i].seriesName === "操作系统已用内存" || params[i].seriesName === "操作系统空闲内存" || params[i].seriesName === "操作系统总内存") {
+                      relVal += '<br/>' + params[i].marker + params[i].seriesName + ' : ' + params[i].value + "MB";
+                    } else {
+                      relVal += '<br/>' + params[i].marker + params[i].seriesName + ' : ' + params[i].value;
+                    }
+                  } else {
+                    relVal += "";
+                  }
+                }
+                return relVal;
+              }
+            });
+          }
+        },
+        error: function (errorMsg) {
+          //请求失败时执行该函数
+          alert("请求数据失败!");
+        }
+      });
+      setTimeout("initPageViewMemoryData()", 30000);
+    }
+
+    /*
+      初始化访问量
+     */
+    function initPageViewData() {
+      var theDate = $("#theDate").val();
+      var myChart = echarts.init(document.getElementById('pageView'));
+      myChart.showLoading();    //数据加载完之前先显示一段简单的loading动画
+      var names = [];    //（实际用来盛放X轴坐标值）
+      var nums = [];    //（实际用来盛放Y坐标值）
+      $.ajax({
+        type: "get",
+        async: false,            //异步请求（同步请求将会锁住浏览器，用户其他操作必须等待请求完成才可以执行）
+        url: url + 'devg/monitor/pageView',    //请求
+        data: {'theDate': theDate},
+        dataType: "json",        //返回数据形式为json
+        success: function (result) {
+          if (!result.success) {
+            console.log("message:" + result.message);
+            myChart.hideLoading();    //隐藏加载动画
+            self.location.href = url + 'monitor-login.html';
+            return false;
+          }
+          //请求成功时执行该函数内容，result即为服务器返回的json对象
+          if (result.success) {
+            var startScollBar = result.data.startScollBar;
+            var endScollBar = result.data.endScollBar;
+            var keyList = result.data.keyList;
+            for (var i = 0; i < keyList.length; i++) {
+              names.push(keyList[i]);
+            }
+            var valueList = result.data.valueList;
+            for (var i = 0; i < valueList.length; i++) {
+              nums.push(valueList[i]);
+            }
+            myChart.hideLoading();    //隐藏加载动画
+            myChart.setOption({        //加载数据图表
+              /*title: {
+                text: '访问量统计'
+              },*/
+              legend: {
+                data: ['访问量统计']
+              },
+              dataZoom: [{
+                // type: 'slider',
+                // show: true,
+                // xAxisIndex: [0],
+                // zoomLock: true,
+                // start: startScollBar,//滚动条的起始位置
+                // end: endScollBar, //滚动条的截止位置（按比例分割你的柱状图x轴长度）
+                // handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                // handleSize: '80%',
+                // handleStyle: {
+                //     color: '#fff',
+                //     shadowBlur: 3,
+                //     shadowColor: 'rgba(0, 0, 0, 0.6)',
+                //     shadowOffsetX: 2,
+                //     shadowOffsetY: 2
+                // }
+                type: 'slider',
+                show: true, // flase直接隐藏图形
+                showDetail: false,
+                xAxisIndex: [0],
+                height: 3,
+                showDataShadow: false,
+                handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                fillerColor: '#FEA629',
+                borderColor: 'transparent',
+                backgroundColor: 'transparent',
+                handleSize: 18,
+                bottom: 40,
+                zoomLock: true,
+                dataBackgroundColor: 'transparent',
+                start: startScollBar,//滚动条的起始位置
+                end: endScollBar, //滚动条的截止位置（按比例分割你的柱状图x轴长度）
+                handleStyle: {
+                  color: '#FEA629',
+                  shadowBlur: 3,
+                  shadowColor: 'rgba(0, 0, 0, 0.6)',
+                  shadowOffsetX: 2,
+                  shadowOffsetY: 2
+                },
+                dataBackground: {
+                  lineStyle: {
+                    color: 'transparent'
+                  },
+                  areaStyle: {
+                    color: 'transparent'
+                  }
+                }
+              }],
+              grid: {
+                left: '2%',
+                right: '4.5%',
+                bottom: '5.5%',
+                containLabel: true
+              },
+              xAxis: {
+                data: names,
+                axisLabel: { //设置x轴的字
+                  show: true,
+                  interval: 0,//使x轴横坐标全部显示
+                  textStyle: {//x轴字体样式
+                    color: "rgba(255,255,255,1)",
+                    margin: 5
+                  }
+                },
+                axisTick: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                },
+                splitLine: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                }
+              },
+              yAxis: {
+                type: 'value',
+                axisLabel: { //设置x轴的字
+                  show: true,
+                  interval: 0,//使x轴横坐标全部显示
+                  textStyle: {//x轴字体样式
+                    color: "rgba(255,255,255,1)",
+                    margin: 5
+                  }
+                },
+                axisTick: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                },
+                splitLine: {
+                  lineStyle: {
+                    color: '#6076AD',
+                    opacity: 0.3
+                  }
+                }
+                // , min: 0
+                // , max: 3000
+              },
+              color: ['#5592FF'],
+              legend: {
+                right: 50,
+                // width: '50%',
+                itemWidth: 14,
+                itemHeight: 14,
+                textStyle: {
+                  fontSize: 14,
+                  color: '#fff'
+                },
+                icon: 'rect'
+              },
+              series: [{
+                // 根据名字对应到相应的系列
+                type: 'line',
+                name: '访问量统计',
+                itemStyle: {normal: {label: {show: true}}},
+                label: {
+                  normal: {
+                    show: true,
+                    position: 'top',
+                    formatter: function (params) {
+                      if (params.value > 0) {
+                        return params.value;
+                      } else {
+                        return '';
+                      }
+                    }
+                  }
+                },
+                data: nums
+              }]
+            });
+          }
+        },
+        error: function (errorMsg) {
+          //请求失败时执行该函数
+          alert("图表请求数据失败!");
+          myChart.hideLoading();
+        }
+      })
+      setTimeout("initPageViewData()", 30000);
+    }
+
+    function searchByDate() {
+      initPageViewData();
+      initPageSearchData();
+      initViewCount();
+      initPageViewMemoryData();
+      initAppWarnSearchData();
+    }
+
+    function initPageSearchData() {
+      var theDate = $("#theDate").val();
+      layui.use(['table', 'laydate', 'form'], function () {
+        var $ = layui.$;
+        var laydate = layui.laydate;
+        var table = layui.table;
+        var form = layui.form;
+        form.render();
+        //执行一个laydate实例
+        laydate.render({
+          elem: '#start' //指定元素
+          , type: 'time'
+          , format: 'HH:mm:ss'
+        });
+        laydate.render({
+          elem: '#end' //指定元素
+          , type: 'time'
+          , format: 'HH:mm:ss'
+        });
+        //这里渲染表格
+        table.render({
+          elem: '#pageSearch'
+          //  , height: 'full-160'
+          // , width : '1465'
+          , height: '342'
+          , even: true
+          , size: 'sm'
+          , method: 'post'
+          , url: url + 'devg/monitor/pageSearch' //数据接口
+          , where: {
+            theDate: theDate
+          }
+          , parseData: function (res) { //res 即为原始返回的数据
+            console.log(res);
+            return {
+              "code": res.code, //解析接口状态
+              "msg": res.message, //解析提示文本
+              "count": res.total,//res.total, //解析数据长度
+              "data": res.data //解析数据列表
+            };
+          }
+          , loading: false
+          , sort: true
+          , page: true //开启分页
+          , contentType: 'application/json'
+          , limits: [10, 30, 50]
+          , cols: [[ //表头
+            {type: 'numbers', title: '序号', width: '5%'}
+            , {field: 'classMethod', title: '类名', width: '20%', align: 'left'}
+            , {field: 'modelName', title: '模块名称', width: '6%', align: 'left'}
+            , {
+              field: 'costTime', title: '执行时长', width: '5%', align: 'left',
+              templet: function (data) {
+                return data.costTime + 'ms';
+              }, sort: true
+            }
+            , {field: 'messageKey', title: '消息Key', width: '10%', align: 'left'}
+            , {field: 'requestUrl', title: '请求Url', width: '15%', align: 'left'}
+            , {field: 'requestIp', title: '请求Ip', width: '6%', align: 'left'}
+            , {field: 'startTime', title: '请求时间', width: '10%', align: 'left', sort: true}
+            , {field: 'requestParams', title: '请求参数', width: '15%', align: 'left'}
+            , {
+              field: 'resultType', title: '执行结果', width: '8.54%', align: 'left',
+              templet: function (data) {
+                if (data.resultType == 'info') {
+                  return '正常';
+                } else if (data.resultType == 'error') {
+                  return '错误';
+                } else {
+                  return '其他';
+                }
+              }
+            }
+          ]]
+        });
+        //这里是查询
+        var active = {
+          reload: function () {
+            var start = $("#start").val();
+            var end = $("#end").val();
+            var theDate = $("#theDate").val();
+            var messageType = $("#messageType").val();
+            var modelName = $("#modelName").val();
+            var resultType = $("#resultType").val();
+            var keyword = $("#keyword").val();
+            var costTimeType = $("#costTimeType").val();
+            table.reload('pageSearch', {
+              where: {
+                start: start,
+                end: end,
+                theDate: theDate,
+                messageType: messageType,
+                modelName: modelName,
+                resultType: resultType,
+                keyword: keyword,
+                costTimeType: costTimeType
+              }
+              , page: {
+                curr: 1 //重新从第 1 页开始
+              }
+            });
+          }
+        };
+        $('#pageSearchButton').on('click', function () {
+          var type = $(this).data('type');
+          active[type] ? active[type].call(this) : '';
+        });
+
+        //监听行单击事件（双击事件为：rowDouble）
+        table.on('sort(test)', function (obj) {
+          // var data = obj.data;
+          var field = obj.field;  //当前排序的字段名
+          var type = obj.type;  //当前排序类型：desc（降序）、asc（升序）、null（空对象，默认排序）
+          var start = $("#start").val();
+          var end = $("#end").val();
+          var theDate = $("#theDate").val();
+          var messageType = $("#messageType").val();
+          var resultType = $("#resultType").val();
+          var keyword = $("#keyword").val();
+          var costTimeType = $("#costTimeType").val();
+          console.log(field + "," + type);
+          table.reload('pageSearch', { //testTable是表格容器id
+            initSort: obj //记录初始排序，如果不设的话，将无法标记表头的排序状态。 layui 2.1.1 新增参数
+            , where: { //请求参数（注意：这里面的参数可任意定义，并非下面固定的格式）
+              field: field,//排序字段
+              order: type, //排序方式
+              start: start,
+              end: end,
+              theDate: theDate,
+              messageType: messageType,
+              resultType: resultType,
+              keyword: keyword,
+              costTimeType: costTimeType
+            }
+          });
+        });
+      });
+    }
+
+    function initAppWarnSearchData() {
+      var theDate = $("#theDate").val();
+      layui.use(['table', 'laydate', 'form'], function () {
+        var $ = layui.$;
+        var laydate = layui.laydate;
+        var table = layui.table;
+        var form = layui.form;
+        form.render();
+        //执行一个laydate实例
+        laydate.render({
+          elem: '#appStart' //指定元素
+          , type: 'time'
+          , format: 'HH:mm:ss'
+        });
+        laydate.render({
+          elem: '#appEnd' //指定元素
+          , type: 'time'
+          , format: 'HH:mm:ss'
+        });
+        //这里渲染表格
+        table.render({
+          elem: '#appPageSearch'
+          //  , height: 'full-160'
+          // , width : '1465'
+          , height: '342'
+          , even: true
+          , size: 'sm'
+          , method: 'post'
+          , url: url + 'devg/monitor/appWarnSearch' //数据接口
+          , where: {
+            theDate: theDate
+          }
+          , parseData: function (res) { //res 即为原始返回的数据
+            console.log(res);
+            return {
+              "code": res.code, //解析接口状态
+              "msg": res.message, //解析提示文本
+              "count": res.total,//res.total, //解析数据长度
+              "data": res.data //解析数据列表
+            };
+          }
+          , loading: false
+          , sort: true
+          , page: true //开启分页
+          , contentType: 'application/json'
+          , limits: [10, 30, 50]
+          , cols: [[ //表头
+            {type: 'numbers', title: '序号', width: '5%'}
+            , {field: 'appVersion', title: 'APP版本', width: '10%', align: 'left'}
+            , {field: 'phoneModel', title: '手机型号', width: '10%', align: 'left'}
+            , {field: 'appType', title: 'APP类型', width: '10%', align: 'left'}
+            , {field: 'username', title: '用户名', width: '10%', align: 'left'}
+            , {field: 'warnTime', title: '请求时间', width: '10%', align: 'left', sort: true}
+            , {field: 'warnReason', title: '预警原因', width: '45.25%', align: 'left'}
+          ]]
+        });
+        //这里是查询
+        var active = {
+          reload: function () {
+            var appStart = $("#appStart").val();
+            var appEnd = $("#appEnd").val();
+            var theDate = $("#theDate").val();
+            var appType = $("#appType").val();
+            var appKeyword = $("#appKeyword").val();
+            table.reload('appPageSearch', {
+              where: {
+                appStart: appStart,
+                appEnd: appEnd,
+                theDate: theDate,
+                appType: appType,
+                appKeyword: appKeyword
+              }
+              , page: {
+                curr: 1 //重新从第 1 页开始
+              }
+            });
+          }
+        };
+        $('#appPageSearchButton').on('click', function () {
+          var type = $(this).data('type');
+          active[type] ? active[type].call(this) : '';
+        });
+
+        //监听行单击事件（双击事件为：rowDouble）
+        table.on('sort(test)', function (obj) {
+          // var data = obj.data;
+          var field = obj.field;  //当前排序的字段名
+          var type = obj.type;  //当前排序类型：desc（降序）、asc（升序）、null（空对象，默认排序）
+          var appStart = $("#appStart").val();
+          var appEnd = $("#appEnd").val();
+          var theDate = $("#theDate").val();
+          var appType = $("#appType").val();
+          var appKeyword = $("#appKeyword").val();
+          console.log(field + "," + type);
+          table.reload('pageSearch', { //testTable是表格容器id
+            initSort: obj //记录初始排序，如果不设的话，将无法标记表头的排序状态。 layui 2.1.1 新增参数
+            , where: { //请求参数（注意：这里面的参数可任意定义，并非下面固定的格式）
+              field: field,//排序字段
+              order: type, //排序方式
+              appStart: appStart,
+              appEnd: appEnd,
+              theDate: theDate,
+              appType: appType,
+              appKeyword: appKeyword
+            }
+          });
+        });
+      });
+    }
+
+    function initViewCount() {
+      var theDate = $("#theDate").val();
+      var viewCountMessageType = $("#viewCountMessageType").val();
+      layui.use(['table', 'form'], function () {
+        var $ = layui.$;
+        var table = layui.table;
+        var form = layui.form;
+        form.render();
+        //这里渲染表格
+        table.render({
+          elem: '#viewCountTable'
+          //  , height: 'full-160'
+          // , width : '1465'
+          , height: '342'
+          , even: true
+          , size: 'sm'
+          , method: 'post'
+          , url: url + 'devg/monitor/initViewCount' //数据接口
+          , where: {
+            messageType: viewCountMessageType,
+            theDate: theDate
+          }
+          , parseData: function (res) { //res 即为原始返回的数据
+            console.log(res);
+            return {
+              "code": res.code, //解析接口状态
+              "msg": res.message, //解析提示文本
+              "count": res.total,//res.total, //解析数据长度
+              "data": res.data //解析数据列表
+            };
+          }
+          , loading: false
+          , page: false //开启分页
+          , contentType: 'application/json'
+          , limits: [10, 30, 50]
+          , cols: [[ //表头
+            // {field: 'num', title: '', width: 100, align: 'left'},
+            {type: 'numbers', title: '序号', width: '5%'},
+            {field: 'requestUrl', title: '请求Url', width: '50%', align: 'left'},
+            {
+              field: 'docCount', title: '请求次数', width: '15%', align: 'left',
+              sort: true
+            },
+            {
+              field: 'avgNumber', title: '平均时长', width: '10%', align: 'left',
+              templet: function (data) {
+                return data.avgNumber + 'ms';
+              },
+              sort: true
+            },
+            {
+              field: 'maxNumber', title: '最大时长', width: '10%', align: 'left',
+              templet: function (data) {
+                return data.maxNumber + 'ms';
+              },
+              sort: true
+            },
+            {
+              field: 'minNumber', title: '最小时长', width: '10.25%', align: 'left',
+              templet: function (data) {
+                return data.minNumber + 'ms';
+              },
+              sort: true
+            }
+          ]]
+        });
+      });
+    }
+
+    function changeMemoryHour() {
+      initPageViewMemoryData();
+    }
+  </script>
+  <style type="text/css">
+    html {
+      background: url("devg-monitor/images/background.png") no-repeat center;
+      background-size: 100% 110%;
+    }
+
+    .div-inline {
+      text-align: center;
+      /*width: 100%;*/
+    }
+
+    body {
+      /*background: #EDF4FC;*/
+      /*padding: 20px 50px 50px 50px;*/
+      min-width: 1200px;
+    }
+
+    .titleClass {
+      width: 100%;
+      height: 66px;
+      background: url("devg-monitor/images/headright.png") no-repeat center;
+      background-size: 100% 100%;
+      position: relative;
+    }
+
+    .logo {
+      width: 13%;
+      height: 72%;
+      position: absolute;
+      top: 5px;
+      left: 40px;
+      background: url("devg-monitor/images/kqdp_logo.png") no-repeat center;
+      background-size: 100% 100%;
+    }
+
+    .title {
+      position: absolute;
+      top: 13px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 3vh;
+      font-weight: bold;
+      color: rgba(2, 238, 255, 1);
+      line-height: 49px;
+    }
+
+    .selectDate {
+      display: inline-block;
+      width: 200px;
+      text-align: left;
+      margin-left: 60px;
+      position: relative;
+    }
+
+    .selectTime {
+      display: inline-block;
+      width: 100px;
+      text-align: left;
+      position: absolute;
+      left: 400px;
+    }
+
+    .echartsClass {
+      margin-top: 20px;
+      margin-left: 2.25%;
+      margin-bottom: 20px;
+      width: 95.5%;
+      background: url("devg-monitor/images/frame3.png") no-repeat center;
+      background-size: 100% 100%;
+      overflow: hidden;
+    }
+
+    .pageView,
+    .pageMemoryView {
+      width: 100%;
+      padding: 20px;
+    }
+
+    .contentNum {
+      margin-top: 20px;
+      margin-left: 2.25%;
+      margin-bottom: 20px;
+      width: 95.5%;
+      height: 484px;
+      background: url("devg-monitor/images/dikuang.png") no-repeat center;
+      background-size: 100% 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .contentNum_title {
+      position: absolute;
+      top: -20px;
+      left: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: rgba(2, 238, 255, 1);
+      line-height: 85px;
+    }
+
+    .layui-inline {
+      width: 97%;
+      /*background-color: #ffffff;*/
+      /*box-sizing: border-box;*/
+    }
+
+    .layui-table-sort.layui-inline {
+      width: initial;
+      background-color: initial;
+      padding: 0px;
+    }
+
+    .layui-table-body {
+      height: 310px !important;
+    }
+
+    .searchContent {
+      margin-top: 20px;
+      margin-left: 2.25%;
+      margin-bottom: 20px;
+      width: 95.5%;
+      height: 512px;
+      background: url("devg-monitor/images/dikuang.png") no-repeat center;
+      background-size: 100% 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .layui-table td, .layui-table th, .layui-table-col-set, .layui-table-fixed-r, .layui-table-grid-down, .layui-table-header, .layui-table-page, .layui-table-tips-main, .layui-table-tool, .layui-table-total, .layui-table-view, .layui-table[lay-skin=line], .layui-table[lay-skin=row] {
+      border-color: #3C57FF !important;
+    }
+
+    .layui-table {
+      background-color: initial;
+      color: #fff;
+    }
+
+    .layui-table tbody tr:hover, .layui-table thead tr, .layui-table-click, .layui-table-header, .layui-table-hover, .layui-table-mend, .layui-table-patch, .layui-table-tool, .layui-table-total, .layui-table-total tr, .layui-table[lay-even] tr:nth-child(even) {
+      background-color: initial;
+      color: #fff;
+    }
+
+    /*修改滚动条样式*/
+    div::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+      /**/
+    }
+
+    .layui-table-body::-webkit-scrollbar-track {
+      background: #030751;
+      border-radius: 2px;
+    }
+
+    .layui-table-body::-webkit-scrollbar-thumb {
+      background: #3C57FF;
+      border-radius: 10px;
+    }
+
+    .layui-table-body::-webkit-scrollbar-thumb:hover {
+      background: #3C57FF;
+    }
+
+    .layui-table-body::-webkit-scrollbar-corner {
+      background: #179a16;
+    }
+
+    .layui-table-page .layui-laypage a, .layui-table-page .layui-laypage span {
+      color: #fff;
+    }
+
+    .layui-laypage .layui-laypage-curr .layui-laypage-em {
+      background-color: #02EEFF;
+    }
+
+    .layui-input, .layui-textarea {
+      background-color: #000281;
+    }
+
+    .layui-badge-rim, .layui-colla-content, .layui-colla-item, .layui-collapse, .layui-elem-field, .layui-form-pane .layui-form-item[pane], .layui-form-pane .layui-form-label, .layui-input, .layui-layedit, .layui-layedit-tool, .layui-quote-nm, .layui-select, .layui-tab-bar, .layui-tab-card, .layui-tab-title, .layui-tab-title .layui-this:after, .layui-textarea {
+      border-color: #02EEFF;
+    }
+
+    select::-webkit-input-placeholder,
+    input::-webkit-input-placeholder {
+      color: #FFFFFF;
+    }
+
+    select:-moz-placeholder,
+    input:-moz-placeholder {
+      color: #FFFFFF;
+    }
+
+    .layui-input:hover, .layui-textarea:hover {
+      border-color: #02EEFF !important;
+    }
+
+    .layui-form-select .layui-input {
+      color: #fff;
+    }
+
+    .layui-btn {
+      background-color: #3C57FF;
+    }
+
+    button, input, optgroup, option, select, textarea {
+      background-color: #000281;
+      border-color: #02EEFF;
+      color: #fff;
+      padding-left: 10px;
+    }
+
+    .layui-form-select dl {
+      background-color: #000281;
+      color: #fff;
+    }
+
+    .layui-form-select dl dd.layui-this {
+      background-color: #1E90FF;
+    }
+
+    .layui-form-select dl dd:hover {
+      background-color: #1E90FF;
+    }
+
+    .layui-laydate .layui-this {
+      background-color: #1E90FF !important;
+    }
+
+    /*.layui-laydate-content td:hover, .layui-laydate-list li:hover {*/
+    /*background-color: #1E90FF!important;*/
+    /*color: #fff;*/
+    /*}*/
+    .layui-table-page .layui-laypage input {
+      background-color: #000281;
+      color: #fff;
+    }
+
+    .layui-table-page .layui-laypage button {
+      background-color: #3A55FA;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+<div class="titleClass">
+  <div class="logo"></div>
+  <div class="title" id="monitorName"></div>
+</div>
+<!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
+<div class="echartsClass">
+  <div class="div-inline selectDate" style="margin-top:20px;margin-bottom:20px">
+    <!--type="date"-->
+    <span style="color: #fff;display: inline-block;position: absolute;top: 10px;">选择日期:</span>&nbsp;&nbsp;<input id="theDate" class="layui-input"
+                                                                                                                 style="display: inline-block;position: absolute;left: 70px;"
+                                                                                                                 placeholder="yyyy-MM-dd" value=""
+                                                                                                                 onchange="searchByDate()"/>
+  </div>
+  <div class="div-inline selectTime" style="margin-top:20px;margin-bottom:20px">
+    <select id="selectHour" style="width: 150px;height: 38px;" onclick="changeMemoryHour()">
+      <option value="1">0-2小时</option>
+      <option value="2">2-4小时</option>
+      <option value="3">4-6小时</option>
+      <option value="4">6-8小时</option>
+      <option value="5">8-10小时</option>
+      <option value="6">10-12小时</option>
+      <option value="7">12-14小时</option>
+      <option value="8">14-16小时</option>
+      <option value="9">16-18小时</option>
+      <option value="10">18-20小时</option>
+      <option value="11">20-22小时</option>
+      <option value="12">22-24小时</option>
+    </select>
+  </div>
+  <div id="pageMemoryView" class="div-inline pageMemoryView" style="height:400px;width: 99%;"></div>
+
+  <div id="pageView" class="div-inline pageView" style="height:400px;margin-top: 20px;width: 99%;"></div>
+</div>
+<!--请求数量统计-->
+<div style="text-align: center;margin-top:20px;" class="contentNum">
+  <div class="contentNum_title">
+    请求数量统计
+  </div>
+  <div class="layui-row div-inline">
+    <form class="layui-form layui-col-md12 x-so" style="text-align: left;margin-bottom: 10px;margin-top: 60px;margin-left: 20px;">
+      <span style="color: #ffffff;">监控类型:</span>
+      <div class="layui-input-inline">
+        <select id="viewCountMessageType" lay-filter="viewCountMessageType" lay-verify="required" lay-search="">
+          <option value="1">Controller</option>
+          <option value="3">Mapper</option>
+        </select>
+      </div>
+    </form>
+    <div style="text-align: center;">
+      <div class="layui-inline">
+        <table id="viewCountTable" lay-filter="viewCountTable" style="margin: 0 auto;"></table>
+      </div>
+    </div>
+  </div>
+</div>
+<!--汇总查询-->
+<div style="text-align: center;margin-top:20px;" class="searchContent">
+  <div class="contentNum_title">
+    汇总查询
+  </div>
+  <div class="layui-row div-inline">
+    <form class="layui-form layui-col-md12 x-so" style="text-align: left;margin-bottom: 10px;margin-top: 60px;margin-left: 20px;">
+      <div class="layui-input-inline">
+        <input type="text" class="layui-input" name="keyword" id="keyword" placeholder="关键字"
+               style="width: 200px;">
+      </div>
+      <div class="layui-input-inline">
+        <select id="messageType" lay-verify="required" lay-search="">
+          <option value="">监控类型</option>
+          <option value="1">Controller</option>
+          <option value="3">Mapper</option>
+        </select>
+      </div>
+      <div class="layui-input-inline">
+        <input type="text" class="layui-input" name="modelName" id="modelName" placeholder="模块名称">
+      </div>
+      <div class="layui-input-inline">
+        <select id="resultType" lay-verify="required" lay-search="">
+          <option value="">结果类型</option>
+          <option value="info">正常</option>
+          <option value="error">错误</option>
+        </select>
+      </div>
+      <div class="layui-input-inline">
+        <select id="costTimeType" lay-verify="required" lay-search="">
+          <option value="">请求时长</option>
+          <option value="0">小于等于1000ms</option>
+          <option value="1">大于1000ms小于等于3000ms</option>
+          <option value="2">大于3000ms</option>
+        </select>
+      </div>
+      <div class="layui-input-inline">
+        <input type="text" class="layui-input" name="start" id="start" placeholder="开始时间">
+      </div>
+      <div class="layui-input-inline">
+        <input type="text" class="layui-input" name="end" id="end" placeholder="结束时间">
+      </div>
+      <a class="layui-btn" id="pageSearchButton" style="height: 38px; line-height: 38px;" data-type="reload">搜索</a>
+    </form>
+  </div>
+  <div style="  text-align: center;">
+    <div class="layui-row div-inline">
+      <div style="text-align: center;">
+        <div class="layui-inline">
+          <table id="pageSearch" lay-filter="test" style="margin: 0 auto;"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--APP预警查询-->
+<div style="text-align: center;margin-top:20px;" class="searchContent">
+  <div class="contentNum_title">
+    APP预警查询
+  </div>
+  <div class="layui-row div-inline">
+    <form class="layui-form layui-col-md12 x-so" style="text-align: left;margin-bottom: 10px;margin-top: 60px;margin-left: 20px;">
+      <div class="layui-input-inline">
+        <input type="text" class="layui-input" name="appKeyword" id="appKeyword" placeholder="关键字"
+               style="width: 200px;">
+      </div>
+      <div class="layui-input-inline">
+        <select id="appType" lay-verify="required" lay-search="">
+          <option value="">APP类型</option>
+          <option value="android">android</option>
+          <option value="ios">ios</option>
+        </select>
+      </div>
+      <div class="layui-input-inline">
+        <input type="text" class="layui-input" name="appStart" id="appStart" placeholder="开始时间">
+      </div>
+      <div class="layui-input-inline">
+        <input type="text" class="layui-input" name="appEnd" id="appEnd" placeholder="结束时间">
+      </div>
+      <a class="layui-btn" id="appPageSearchButton" style="height: 38px; line-height: 38px;" data-type="reload">搜索</a>
+    </form>
+  </div>
+  <div style="  text-align: center;">
+    <div class="layui-row div-inline">
+      <div style="text-align: center;">
+        <div class="layui-inline">
+          <table id="appPageSearch" lay-filter="test" style="margin: 0 auto;"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
