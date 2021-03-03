@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.org.monitor.MonitorAutoConfiguration
+com.github.devgcoder.MonitorAutoConfiguration
