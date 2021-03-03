@@ -16,8 +16,6 @@ public class RabbitConfig {
 
   private RabbitMonitor rabbitMonitorMessage;
 
-  private RabbitMonitor rabbitMonitorMemory;
-
   public String getRabbitHost() {
     return rabbitHost;
   }
@@ -72,13 +70,5 @@ public class RabbitConfig {
 
   public void setRabbitMonitorMessage(RabbitMonitor rabbitMonitorMessage) {
     this.rabbitMonitorMessage = rabbitMonitorMessage;
-  }
-
-  public RabbitMonitor getRabbitMonitorMemory() {
-    return rabbitMonitorMemory;
-  }
-
-  public void setRabbitMonitorMemory(RabbitMonitor rabbitMonitorMemory) {
-    this.rabbitMonitorMemory = rabbitMonitorMemory;
   }
 }

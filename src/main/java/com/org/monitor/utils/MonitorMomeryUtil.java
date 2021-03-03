@@ -13,10 +13,6 @@ public class MonitorMomeryUtil {
 
   public static final Map<String, String> indexExistsMap = new ConcurrentHashMap<>();
 
-  public static final Map<String, Long> mailCanSendMap = new ConcurrentHashMap<>();
-
-  public static final String connectionChannel = "connectionChannel";
-
   public static final String restHighLevelClient = "restHighLevelClient";
 
   public static final String rabbitmq = "rabbitmq";

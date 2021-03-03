@@ -6,7 +6,6 @@ import com.org.monitor.elasticsearch.EsResult;
 import com.org.monitor.elasticsearch.EsSearch;
 import com.org.monitor.model.JsonModel;
 import com.org.monitor.utils.IpAddressUtil;
-import com.org.monitor.utils.JvmUitl;
 import com.org.monitor.utils.MonitorUtil;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -78,13 +77,6 @@ public class MonitorIndexController extends MonitorBasicController {
     resultDate.put("theDate", theDate);
     resultDate.put("selectHour", MonitorUtil.getSelectHour());
     resultDate.put("monitorName", monitorName);
-    return JsonModel.newSuccess(resultDate);
-  }
-
-  @RequestMapping("/initMomery")
-  public JsonModel initMomery(HttpServletRequest request) {
-    Map<String, Object> resultDate = new HashMap<>();
-    resultDate.put("momeryModel", JvmUitl.getMomeryModel());
     return JsonModel.newSuccess(resultDate);
   }
 

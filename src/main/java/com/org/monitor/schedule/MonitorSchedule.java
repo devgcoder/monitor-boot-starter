@@ -1,31 +1,11 @@
 package com.org.monitor.schedule;
 
-import com.alibaba.fastjson.JSON;
-import com.org.monitor.model.CommonParams.MonitorModelType;
 import com.org.monitor.model.ElasticSearchConfig;
 import com.org.monitor.model.MonitorConfig;
-import com.org.monitor.model.MonitorMemory;
-import com.org.monitor.utils.CommonEnum.WarnType;
-import com.org.monitor.utils.DingdingUtil;
-import com.org.monitor.utils.IpAddressUtil;
 import com.org.monitor.utils.MonitorMomeryUtil;
 import com.org.monitor.utils.MonitorUtil;
-import com.org.monitor.utils.SockerUtil;
-import com.sun.management.OperatingSystemMXBean;
-import java.lang.management.ManagementFactory;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -71,8 +51,6 @@ public class MonitorSchedule {
         deleteDay = elasticSearchConfig.getDeleteDayNum();
       }
       deleteIndex(restHighLevelClient, getDeleteIndex(MonitorUtil.indexMessagePrefix, deleteFromDay, deleteDay));
-      deleteIndex(restHighLevelClient, getDeleteIndex(MonitorUtil.indexMemoryPrefix, deleteFromDay, deleteDay));
-      deleteIndex(restHighLevelClient, getDeleteIndex(MonitorUtil.indexAppPrefix, deleteFromDay, deleteDay));
       // 创建明天的索引
       String theDay = MonitorUtil.localDateTimeFormat(LocalDateTime.now().plusDays(1), MonitorUtil.FORMAT_PATTERN2);
       MonitorUtil.checkAndCreateIndex(MonitorUtil.getMessageIndexName(theDay), restHighLevelClient);

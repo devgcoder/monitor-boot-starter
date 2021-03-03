@@ -385,14 +385,7 @@ public class MonitorUtil {
     String monitorMessageNowIndex = indexMessagePrefix + getNowDate(FORMAT_PATTERN2);
     String monitorMessagePreIndex = indexMessagePrefix + getPreDate(FORMAT_PATTERN2);
     String monitorMessageNextIndex = indexMessagePrefix + getNextDate(FORMAT_PATTERN2);
-    String monitorMemoryNowIndex = indexMemoryPrefix + getNowDate(FORMAT_PATTERN2);
-    String monitorMemoryPreIndex = indexMemoryPrefix + getPreDate(FORMAT_PATTERN2);
-    String monitorMemoryNextIndex = indexMemoryPrefix + getNextDate(FORMAT_PATTERN2);
-    String monitorAppNowIndex = indexAppPrefix + getNowDate(FORMAT_PATTERN2);
-    String monitorAppPreIndex = indexAppPrefix + getPreDate(FORMAT_PATTERN2);
-    String monitorAppNextIndex = indexAppPrefix + getNextDate(FORMAT_PATTERN2);
-    return new String[]{monitorMessageNowIndex, monitorMessagePreIndex, monitorMessageNextIndex, monitorMemoryNowIndex,
-        monitorMemoryPreIndex, monitorMemoryNextIndex, monitorAppNowIndex, monitorAppPreIndex, monitorAppNextIndex};
+    return new String[]{monitorMessageNowIndex, monitorMessagePreIndex, monitorMessageNextIndex};
   }
 
   private static void clearIndexMap() {
