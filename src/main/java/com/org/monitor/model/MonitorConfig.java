@@ -6,9 +6,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "monitor")
 public class MonitorConfig {
 
-  private Boolean monitorControllerAndMapper;
+  // 是否开启controller
+  private Boolean enableMonitorController;
 
-  private String[] monitorNonClassName;
+  // 是否开启mapper监控
+  private Boolean enableMonitorMapper;
+
+  private String[] monitorNonClassMethod;
 
   private String requestParams;
 
@@ -40,14 +44,6 @@ public class MonitorConfig {
 
   private List<String> serverAccessConfig;
 
-  public Boolean getMonitorControllerAndMapper() {
-    return monitorControllerAndMapper;
-  }
-
-  public void setMonitorControllerAndMapper(Boolean monitorControllerAndMapper) {
-    this.monitorControllerAndMapper = monitorControllerAndMapper;
-  }
-
   public String getMonitorName() {
     return monitorName;
   }
@@ -64,12 +60,28 @@ public class MonitorConfig {
     this.requestParams = requestParams;
   }
 
-  public String[] getMonitorNonClassName() {
-    return monitorNonClassName;
+  public Boolean getEnableMonitorController() {
+    return enableMonitorController;
   }
 
-  public void setMonitorNonClassName(String[] monitorNonClassName) {
-    this.monitorNonClassName = monitorNonClassName;
+  public void setEnableMonitorController(Boolean enableMonitorController) {
+    this.enableMonitorController = enableMonitorController;
+  }
+
+  public Boolean getEnableMonitorMapper() {
+    return enableMonitorMapper;
+  }
+
+  public void setEnableMonitorMapper(Boolean enableMonitorMapper) {
+    this.enableMonitorMapper = enableMonitorMapper;
+  }
+
+  public String[] getMonitorNonClassMethod() {
+    return monitorNonClassMethod;
+  }
+
+  public void setMonitorNonClassMethod(String[] monitorNonClassMethod) {
+    this.monitorNonClassMethod = monitorNonClassMethod;
   }
 
   public String getQueueType() {

@@ -46,8 +46,6 @@ public class MonitorInit implements InitializingBean {
 
   private final Logger logger = LoggerFactory.getLogger(MonitorInit.class);
 
-  private final double limitRate = 0.75d;  // 报警阀值
-
   private MonitorConfig monitorConfig;
 
   public MonitorInit(MonitorConfig monitorConfig) {
@@ -256,14 +254,5 @@ public class MonitorInit implements InitializingBean {
           }
         }));
     MonitorMomeryUtil.restHighLevelClientMap.put(MonitorMomeryUtil.restHighLevelClient, restHighLevelClient);
-  }
-
-
-  public MonitorConfig getMonitorConfig() {
-    return monitorConfig;
-  }
-
-  public void setMonitorConfig(MonitorConfig monitorConfig) {
-    this.monitorConfig = monitorConfig;
   }
 }
