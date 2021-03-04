@@ -263,7 +263,6 @@
       initPageViewData();
       initPageSearchData();
       initViewCount();
-      initAppWarnSearchData();
     }
 
     function initPageSearchData() {
@@ -405,115 +404,6 @@
       });
     }
 
-    function initAppWarnSearchData() {
-      var theDate = $("#theDate").val();
-      layui.use(['table', 'laydate', 'form'], function () {
-        var $ = layui.$;
-        var laydate = layui.laydate;
-        var table = layui.table;
-        var form = layui.form;
-        form.render();
-        //执行一个laydate实例
-        laydate.render({
-          elem: '#appStart' //指定元素
-          , type: 'time'
-          , format: 'HH:mm:ss'
-        });
-        laydate.render({
-          elem: '#appEnd' //指定元素
-          , type: 'time'
-          , format: 'HH:mm:ss'
-        });
-        //这里渲染表格
-        table.render({
-          elem: '#appPageSearch'
-          //  , height: 'full-160'
-          // , width : '1465'
-          , height: '342'
-          , even: true
-          , size: 'sm'
-          , method: 'post'
-          , url: url + 'devg/monitor/appWarnSearch' //数据接口
-          , where: {
-            theDate: theDate
-          }
-          , parseData: function (res) { //res 即为原始返回的数据
-            console.log(res);
-            return {
-              "code": res.code, //解析接口状态
-              "msg": res.message, //解析提示文本
-              "count": res.total,//res.total, //解析数据长度
-              "data": res.data //解析数据列表
-            };
-          }
-          , loading: false
-          , sort: true
-          , page: true //开启分页
-          , contentType: 'application/json'
-          , limits: [10, 30, 50]
-          , cols: [[ //表头
-            {type: 'numbers', title: '序号', width: '5%'}
-            , {field: 'appVersion', title: 'APP版本', width: '10%', align: 'left'}
-            , {field: 'phoneModel', title: '手机型号', width: '10%', align: 'left'}
-            , {field: 'appType', title: 'APP类型', width: '10%', align: 'left'}
-            , {field: 'username', title: '用户名', width: '10%', align: 'left'}
-            , {field: 'warnTime', title: '请求时间', width: '10%', align: 'left', sort: true}
-            , {field: 'warnReason', title: '预警原因', width: '45.25%', align: 'left'}
-          ]]
-        });
-        //这里是查询
-        var active = {
-          reload: function () {
-            var appStart = $("#appStart").val();
-            var appEnd = $("#appEnd").val();
-            var theDate = $("#theDate").val();
-            var appType = $("#appType").val();
-            var appKeyword = $("#appKeyword").val();
-            table.reload('appPageSearch', {
-              where: {
-                appStart: appStart,
-                appEnd: appEnd,
-                theDate: theDate,
-                appType: appType,
-                appKeyword: appKeyword
-              }
-              , page: {
-                curr: 1 //重新从第 1 页开始
-              }
-            });
-          }
-        };
-        $('#appPageSearchButton').on('click', function () {
-          var type = $(this).data('type');
-          active[type] ? active[type].call(this) : '';
-        });
-
-        //监听行单击事件（双击事件为：rowDouble）
-        table.on('sort(test)', function (obj) {
-          // var data = obj.data;
-          var field = obj.field;  //当前排序的字段名
-          var type = obj.type;  //当前排序类型：desc（降序）、asc（升序）、null（空对象，默认排序）
-          var appStart = $("#appStart").val();
-          var appEnd = $("#appEnd").val();
-          var theDate = $("#theDate").val();
-          var appType = $("#appType").val();
-          var appKeyword = $("#appKeyword").val();
-          console.log(field + "," + type);
-          table.reload('pageSearch', { //testTable是表格容器id
-            initSort: obj //记录初始排序，如果不设的话，将无法标记表头的排序状态。 layui 2.1.1 新增参数
-            , where: { //请求参数（注意：这里面的参数可任意定义，并非下面固定的格式）
-              field: field,//排序字段
-              order: type, //排序方式
-              appStart: appStart,
-              appEnd: appEnd,
-              theDate: theDate,
-              appType: appType,
-              appKeyword: appKeyword
-            }
-          });
-        });
-      });
-    }
 
     function initViewCount() {
       var theDate = $("#theDate").val();
@@ -609,7 +499,7 @@
       position: relative;
     }
 
-    .logo {
+  /*  .logo {
       width: 13%;
       height: 72%;
       position: absolute;
@@ -617,7 +507,7 @@
       left: 40px;
       background: url("devg-monitor/images/kqdp_logo.png") no-repeat center;
       background-size: 100% 100%;
-    }
+    }*/
 
     .title {
       position: absolute;
@@ -830,7 +720,6 @@
 </head>
 <body>
 <div class="titleClass">
-  <div class="logo"></div>
   <div class="title" id="monitorName"></div>
 </div>
 <!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
@@ -842,7 +731,6 @@
                                                                                                                  placeholder="yyyy-MM-dd" value=""
                                                                                                                  onchange="searchByDate()"/>
   </div>
-  <div id="pageMemoryView" class="div-inline pageMemoryView" style="height:400px;width: 99%;"></div>
 
   <div id="pageView" class="div-inline pageView" style="height:400px;margin-top: 20px;width: 99%;"></div>
 </div>
@@ -918,44 +806,6 @@
       <div style="text-align: center;">
         <div class="layui-inline">
           <table id="pageSearch" lay-filter="test" style="margin: 0 auto;"></table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!--APP预警查询-->
-<div style="text-align: center;margin-top:20px;" class="searchContent">
-  <div class="contentNum_title">
-    APP预警查询
-  </div>
-  <div class="layui-row div-inline">
-    <form class="layui-form layui-col-md12 x-so" style="text-align: left;margin-bottom: 10px;margin-top: 60px;margin-left: 20px;">
-      <div class="layui-input-inline">
-        <input type="text" class="layui-input" name="appKeyword" id="appKeyword" placeholder="关键字"
-               style="width: 200px;">
-      </div>
-      <div class="layui-input-inline">
-        <select id="appType" lay-verify="required" lay-search="">
-          <option value="">APP类型</option>
-          <option value="android">android</option>
-          <option value="ios">ios</option>
-        </select>
-      </div>
-      <div class="layui-input-inline">
-        <input type="text" class="layui-input" name="appStart" id="appStart" placeholder="开始时间">
-      </div>
-      <div class="layui-input-inline">
-        <input type="text" class="layui-input" name="appEnd" id="appEnd" placeholder="结束时间">
-      </div>
-      <a class="layui-btn" id="appPageSearchButton" style="height: 38px; line-height: 38px;" data-type="reload">搜索</a>
-    </form>
-  </div>
-  <div style="  text-align: center;">
-    <div class="layui-row div-inline">
-      <div style="text-align: center;">
-        <div class="layui-inline">
-          <table id="appPageSearch" lay-filter="test" style="margin: 0 auto;"></table>
         </div>
       </div>
     </div>

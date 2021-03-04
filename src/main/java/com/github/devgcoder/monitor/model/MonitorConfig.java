@@ -2,7 +2,7 @@ package com.github.devgcoder.monitor.model;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "monitor")
+@ConfigurationProperties(prefix = "devg.monitor")
 public class MonitorConfig {
 
   // 是否开启controller
