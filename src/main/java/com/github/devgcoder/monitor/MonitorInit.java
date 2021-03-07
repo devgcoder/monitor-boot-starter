@@ -10,6 +10,7 @@ import com.github.devgcoder.monitor.model.MonitorConfig;
 import com.github.devgcoder.monitor.model.RabbitConfig;
 import com.github.devgcoder.monitor.model.RabbitMonitor;
 import com.github.devgcoder.monitor.model.CommonParams.MonitorModelType;
+import com.github.devgcoder.monitor.schedule.MonitorSchedule;
 import com.github.devgcoder.monitor.utils.CommonEnum;
 import com.github.devgcoder.monitor.utils.CommonEnum.WarnType;
 import com.github.devgcoder.monitor.utils.CommonEnum.messageType;
@@ -67,6 +68,7 @@ public class MonitorInit implements InitializingBean {
       }
       String authorizedUser = monitorConfig.getAuthorizedUser();
       MonitorUtil.authorizedUser = authorizedUser;
+      new Thread(new MonitorSchedule(monitorConfig)).start();
     } catch (Exception ex) {
       logger.error(ex.getMessage());
       ex.printStackTrace();

@@ -14,13 +14,12 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 
 /**
  * @author devg
  * @Date 2020/2/13 11:33
  */
-public class MonitorSchedule {
+public class MonitorSchedule implements Runnable {
 
   private static final Logger logger = LoggerFactory.getLogger(MonitorSchedule.class);
 
@@ -34,8 +33,19 @@ public class MonitorSchedule {
     this.monitorConfig = monitorConfig;
   }
 
-  @Scheduled(cron = "0 30 01 * * ?")
-  public void deleteMonitorIndex() {
+	@Override
+	public void run() {
+		for (; ; ) {
+			deleteMonitorIndex();
+			try {
+				Thread.sleep(30 * 1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public void deleteMonitorIndex() {
     try {
       RestHighLevelClient restHighLevelClient = MonitorMomeryUtil.restHighLevelClientMap.get(MonitorMomeryUtil.restHighLevelClient);
       if (null == restHighLevelClient) {

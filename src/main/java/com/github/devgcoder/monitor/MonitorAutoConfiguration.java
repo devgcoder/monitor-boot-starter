@@ -47,13 +47,6 @@ public class MonitorAutoConfiguration {
     return monitorInit;
   }
 
-  @Bean
-  public MonitorSchedule monitorSchedule() {
-    MonitorSchedule monitorSchedule = new MonitorSchedule(monitorConfig);
-    return monitorSchedule;
-  }
-
-
   public RestTemplate dingRestTempalte() {
     Integer timeOut = 6000;
     // 长链接保持时间长度20秒
