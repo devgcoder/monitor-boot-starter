@@ -1,34 +1,60 @@
-# monitor-boot-starter
-        <dependency>
-              <groupId>org.aspectj</groupId>
-              <artifactId>aspectjweaver</artifactId>
-              <optional>true</optional>
-            </dependency>
-            <dependency>
-              <groupId>com.rabbitmq</groupId>
-              <artifactId>amqp-client</artifactId>
-              <optional>true</optional>
-            </dependency>
-            <dependency>
-              <groupId>com.alibaba</groupId>
-              <artifactId>fastjson</artifactId>
-              <version>1.2.54</version>
-              <optional>true</optional>
-            </dependency>
-            <dependency>
-              <groupId>org.elasticsearch</groupId>
-              <artifactId>elasticsearch</artifactId>
-              <version>7.3.2</version>
-              <optional>true</optional>
-            </dependency>
-            <dependency>
-              <groupId>org.elasticsearch.client</groupId>
-              <artifactId>elasticsearch-rest-high-level-client</artifactId>
-              <version>7.3.2</version>
-              <optional>true</optional>
-            </dependency>
+# 配置部署说明
+
+  1.  放开过滤资源
+      - /monitor-ui.html
+      - /monitor-login.html
+  
+  2.  过滤器或者拦截器放开资源
+       
+          String path = req.getServletPath();
+          if (null != path && (path.contains("devg/monitor/") || path.contains("devg-monitor"))) {
+            chain.doFilter(request, response);
+            return;
+          }
+      
+  3.  WebMvcConfigurer增加路由转发
+  
+           @Override
+           public void addResourceHandlers(ResourceHandlerRegistry registry) {
+             registry.addResourceHandler("monitor-ui.html").addResourceLocations("classpath:/META-INF/resources/");
+             registry.addResourceHandler("monitor-login.html").addResourceLocations("classpath:/META-INF/resources/");
+             registry.addResourceHandler("/monitor*").addResourceLocations("classpath:/META-INF/resources/monitor/");
+           }
+
+
+  4.pom.xml
+        
+           <dependency>
+                 <groupId>org.aspectj</groupId>
+                 <artifactId>aspectjweaver</artifactId>
+                 <optional>true</optional>
+               </dependency>
+               <dependency>
+                 <groupId>com.rabbitmq</groupId>
+                 <artifactId>amqp-client</artifactId>
+                 <optional>true</optional>
+               </dependency>
+               <dependency>
+                 <groupId>com.alibaba</groupId>
+                 <artifactId>fastjson</artifactId>
+                 <version>1.2.54</version>
+                 <optional>true</optional>
+               </dependency>
+               <dependency>
+                 <groupId>org.elasticsearch</groupId>
+                 <artifactId>elasticsearch</artifactId>
+                 <version>7.3.2</version>
+                 <optional>true</optional>
+               </dependency>
+               <dependency>
+                 <groupId>org.elasticsearch.client</groupId>
+                 <artifactId>elasticsearch-rest-high-level-client</artifactId>
+                 <version>7.3.2</version>
+                 <optional>true</optional>
+               </dependency>
         
         
+  5.application.yml
         
     devg:
       monitor:
