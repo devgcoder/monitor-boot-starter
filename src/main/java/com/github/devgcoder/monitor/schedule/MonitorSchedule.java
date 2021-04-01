@@ -6,6 +6,7 @@ import com.github.devgcoder.monitor.utils.MonitorMomeryUtil;
 import com.github.devgcoder.monitor.utils.MonitorUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.IndicesOptions;
@@ -35,14 +36,15 @@ public class MonitorSchedule implements Runnable {
 
 	@Override
 	public void run() {
-		for (; ; ) {
-			deleteMonitorIndex();
-			try {
-				Thread.sleep(30 * 1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+//		for (; ; ) {
+//			deleteMonitorIndex();
+//			try {
+//				Thread.sleep(30 * 1000);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+//		}
+    deleteMonitorIndex();
 	}
 
 	public void deleteMonitorIndex() {
@@ -102,7 +104,9 @@ public class MonitorSchedule implements Runnable {
           @Override
           public void onResponse(AcknowledgedResponse acknowledgedResponse) {
             Boolean isAcknowledged = acknowledgedResponse.isAcknowledged();
-            System.out.println(isAcknowledged);
+            if (!isAcknowledged) {
+              logger.info("delete index{} error", Arrays.toString(index));
+            }
           }
 
           @Override

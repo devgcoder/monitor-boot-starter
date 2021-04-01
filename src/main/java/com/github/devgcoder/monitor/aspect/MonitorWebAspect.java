@@ -51,11 +51,11 @@ public class MonitorWebAspect implements Ordered {
 		}
 	}
 
-	@Pointcut("execution(* com..*Controller.*(..))")
+	@Pointcut("execution(* *..*Controller.*(..))")
 	public void monitorController() {
 	}
 
-	@Pointcut("execution(* com..*Mapper.*(..))")
+	@Pointcut("execution(* *..*Mapper.*(..))")
 	public void monitorMappper() {
 	}
 

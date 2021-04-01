@@ -28,6 +28,8 @@ import com.rabbitmq.client.Envelope;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -68,7 +70,9 @@ public class MonitorInit implements InitializingBean {
       }
       String authorizedUser = monitorConfig.getAuthorizedUser();
       MonitorUtil.authorizedUser = authorizedUser;
-      new Thread(new MonitorSchedule(monitorConfig)).start();
+//      new Thread(new MonitorSchedule(monitorConfig)).start();
+      ScheduledExecutorService newScheduledThreadPool = Executors.newScheduledThreadPool(1);
+      newScheduledThreadPool.scheduleAtFixedRate(new MonitorSchedule(monitorConfig), 10, 10, TimeUnit.SECONDS);
     } catch (Exception ex) {
       logger.error(ex.getMessage());
       ex.printStackTrace();
