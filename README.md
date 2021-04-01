@@ -52,6 +52,11 @@
                  <version>7.3.2</version>
                  <optional>true</optional>
                </dependency>
+               <dependency>
+                 <groupId>com.github.devgcoder</groupId>
+                 <artifactId>monitor-boot-starter</artifactId>
+                 <version>1.1.2</version>
+               </dependency>
         
         
   5.application.yml
